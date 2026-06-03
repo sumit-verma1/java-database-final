@@ -1,8 +1,5 @@
 package com.project.code.Service;
 
-
-
-
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -45,17 +42,18 @@ public class OrderService {
             PlaceOrderRequestDTO placeOrderRequest) {
 
         // Find Existing Customer
-        Optional<Customer> existingCustomer =
+        Optional<Customer> customerOptional =
                 customerRepository.findByEmail(
                         placeOrderRequest
                                 .getEmail());
 
         Customer customer;
 
-        // Create Customer If Not Exists
-        if (existingCustomer.isPresent()) {
+        // Create customer if not exists
+        if (customerOptional.isPresent()) {
 
-            customer = existingCustomer.get();
+            customer =
+                    customerOptional.get();
 
         } else {
 
@@ -78,25 +76,30 @@ public class OrderService {
                     .save(customer);
         }
 
-        // Find Store
-        Optional<Store> optionalStore =
+        // Get Store
+        Optional<Store> storeOptional =
                 storeRepository.findById(
                         placeOrderRequest
                                 .getStoreId());
 
-        if (!optionalStore.isPresent()) {
+        if (!storeOptional.isPresent()) {
             throw new RuntimeException(
                     "Store not found");
         }
 
-        Store store = optionalStore.get();
+        Store store =
+                storeOptional.get();
 
-        // Create Order
+        // Create OrderDetails
         OrderDetails orderDetails =
                 new OrderDetails();
 
-        orderDetails.setCustomer(customer);
-        orderDetails.setStore(store);
+        orderDetails.setCustomer(
+                customer);
+
+        orderDetails.setStore(
+                store);
+
         orderDetails.setTotalPrice(
                 placeOrderRequest
                         .getTotalPrice());
@@ -104,19 +107,20 @@ public class OrderService {
         orderDetails.setDate(
                 LocalDateTime.now());
 
+        // SAVE ORDER DETAILS
         orderDetails =
                 orderDetailsRepository
                 .save(orderDetails);
 
-        // Save Order Items
-        for (PurchaseProduct purchase :
-                placeOrderRequest
-                        .getPurchaseProduct()) {
+        // Process Order Items
+        for (PurchaseProduct productDTO
+                : placeOrderRequest
+                .getPurchaseProduct()) {
 
             Inventory inventory =
                     inventoryRepository
                     .findByProductIdandStoreId(
-                            purchase
+                            productDTO
                                     .getProductId(),
                             placeOrderRequest
                                     .getStoreId());
@@ -126,20 +130,22 @@ public class OrderService {
                         "Inventory not found");
             }
 
-            // Update Stock
+            // REDUCE STOCK LEVEL
             inventory.setQuantity(
                     inventory.getQuantity()
-                            - purchase.getQuantity());
+                    - productDTO
+                    .getQuantity());
 
+            // SAVE UPDATED INVENTORY
             inventoryRepository
                     .save(inventory);
+
+            Product product =
+                    inventory.getProduct();
 
             // Create Order Item
             OrderItem orderItem =
                     new OrderItem();
-
-            Product product =
-                    inventory.getProduct();
 
             orderItem.setOrder(
                     orderDetails);
@@ -148,7 +154,8 @@ public class OrderService {
                     product);
 
             orderItem.setQuantity(
-                    purchase.getQuantity());
+                    productDTO
+                            .getQuantity());
 
             orderItem.setPrice(
                     product.getPrice());
