@@ -1,8 +1,6 @@
 package com.project.code.Service;
 
-
-package com.project.code.Service;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.project.code.Model.Inventory;
@@ -13,26 +11,17 @@ import com.project.code.Repository.ProductRepository;
 @Service
 public class ServiceClass {
 
-    private final ProductRepository productRepository;
+    @Autowired
+    private ProductRepository productRepository;
 
-    private final InventoryRepository inventoryRepository;
+    @Autowired
+    private InventoryRepository inventoryRepository;
 
-    public ServiceClass(
-            ProductRepository productRepository,
-            InventoryRepository inventoryRepository) {
-
-        this.productRepository =
-                productRepository;
-
-        this.inventoryRepository =
-                inventoryRepository;
-    }
-
-    // Validate Inventory
+    // validateInventory
     public boolean validateInventory(
             Inventory inventory) {
 
-        Inventory existingInventory =
+        Inventory inventoryData =
                 inventoryRepository
                 .findByProductIdandStoreId(
                         inventory
@@ -42,22 +31,30 @@ public class ServiceClass {
                                 .getStore()
                                 .getId());
 
-        return existingInventory == null;
+        if (inventoryData != null) {
+            return false;
+        }
+
+        return true;
     }
 
-    // Validate Product
+    // validateProduct
     public boolean validateProduct(
             Product product) {
 
-        Product existingProduct =
+        Product productData =
                 productRepository
                 .findByName(
                         product.getName());
 
-        return existingProduct == null;
+        if (productData != null) {
+            return false;
+        }
+
+        return true;
     }
 
-    // Validate Product Id
+    // ValidateProductId
     public boolean ValidateProductId(
             long id) {
 
@@ -65,14 +62,19 @@ public class ServiceClass {
                 productRepository
                 .findByid(id);
 
-        return product != null;
+        if (product == null) {
+            return false;
+        }
+
+        return true;
     }
 
-    // Get Inventory Id
+    // getInventoryId
     public Inventory getInventoryId(
             Inventory inventory) {
 
-        return inventoryRepository
+        Inventory inventoryData =
+                inventoryRepository
                 .findByProductIdandStoreId(
                         inventory
                                 .getProduct()
@@ -80,5 +82,7 @@ public class ServiceClass {
                         inventory
                                 .getStore()
                                 .getId());
+
+        return inventoryData;
     }
 }
