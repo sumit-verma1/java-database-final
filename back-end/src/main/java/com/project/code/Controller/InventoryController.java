@@ -1,10 +1,8 @@
 package com.project.code.Controller;
 
-
-
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -17,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.project.code.DTO.CombinedRequest;
+import com.project.code.Model.CombinedRequest;
 import com.project.code.Model.Inventory;
 import com.project.code.Model.Product;
 import com.project.code.Repository.InventoryRepository;
@@ -53,12 +51,12 @@ public class InventoryController {
             Inventory inventory =
                     request.getInventory();
 
-            boolean exists =
+            boolean valid =
                     serviceClass
                     .ValidateProductId(
                             product.getId());
 
-            if (!exists) {
+            if (!valid) {
 
                 response.put(
                         "message",
@@ -68,18 +66,21 @@ public class InventoryController {
                 return response;
             }
 
-            Optional<Inventory> existingInventory =
-                    inventoryRepository
-                    .findById(
-                            inventory.getId());
+            Inventory existingInventory =
+                    serviceClass
+                    .getInventoryId(
+                            inventory);
 
-            if (existingInventory.isPresent()) {
+            if (existingInventory != null) {
 
                 productRepository
                         .save(product);
 
+                existingInventory.setQuantity(
+                        inventory.getQuantity());
+
                 inventoryRepository
-                        .save(inventory);
+                        .save(existingInventory);
 
                 response.put(
                         "message",
@@ -99,7 +100,7 @@ public class InventoryController {
 
             response.put(
                     "message",
-                    "Database constraint violation"
+                    e.getMessage()
             );
 
         } catch (Exception e) {
@@ -123,12 +124,12 @@ public class InventoryController {
 
         try {
 
-            boolean exists =
+            boolean valid =
                     serviceClass
                     .validateInventory(
                             inventory);
 
-            if (exists) {
+            if (!valid) {
 
                 response.put(
                         "message",
@@ -151,7 +152,7 @@ public class InventoryController {
 
             response.put(
                     "message",
-                    "Database constraint violation"
+                    e.getMessage()
             );
 
         } catch (Exception e) {
@@ -165,7 +166,7 @@ public class InventoryController {
         return response;
     }
 
-    // Get All Products By Store Id
+    // Get All Products By StoreId
     @GetMapping("/{storeid}")
     public Map<String, Object> getAllProducts(
             @PathVariable Long storeid) {
@@ -173,19 +174,23 @@ public class InventoryController {
         Map<String, Object> response =
                 new HashMap<>();
 
+        List<Product> products =
+                productRepository
+                .findProductsByStoreId(
+                        storeid);
+
         response.put(
                 "products",
-                productRepository
-                        .findProductsByStoreId(
-                                storeid)
+                products
         );
 
         return response;
     }
 
-    // Filter Product By Category & Name
+    // Filter Product
     @GetMapping(
-            "/filter/{category}/{name}/{storeid}")
+        "/filter/{category}/{name}/{storeid}"
+    )
     public Map<String, Object>
     getProductName(
             @PathVariable String category,
@@ -195,8 +200,9 @@ public class InventoryController {
         Map<String, Object> response =
                 new HashMap<>();
 
-        Object products;
+        List<Product> products;
 
+        // category null → search by name
         if ("null".equals(category)) {
 
             products =
@@ -205,7 +211,10 @@ public class InventoryController {
                             storeid,
                             name);
 
-        } else if ("null".equals(name)) {
+        }
+
+        // name null → search by category
+        else if ("null".equals(name)) {
 
             products =
                     productRepository
@@ -213,7 +222,10 @@ public class InventoryController {
                             category,
                             storeid);
 
-        } else {
+        }
+
+        // both provided
+        else {
 
             products =
                     productRepository
@@ -225,13 +237,16 @@ public class InventoryController {
 
         response.put(
                 "product",
-                products);
+                products
+        );
 
         return response;
     }
 
     // Search Product
-    @GetMapping("/search/{name}/{storeId}")
+    @GetMapping(
+        "/search/{name}/{storeId}"
+    )
     public Map<String, Object>
     searchProduct(
             @PathVariable String name,
@@ -243,9 +258,9 @@ public class InventoryController {
         response.put(
                 "product",
                 productRepository
-                        .findByNameLike(
-                                storeId,
-                                name)
+                .findByNameLike(
+                        storeId,
+                        name)
         );
 
         return response;
@@ -259,44 +274,35 @@ public class InventoryController {
         Map<String, String> response =
                 new HashMap<>();
 
-        try {
+        boolean valid =
+                serviceClass
+                .ValidateProductId(id);
 
-            boolean exists =
-                    serviceClass
-                    .ValidateProductId(id);
-
-            if (!exists) {
-
-                response.put(
-                        "message",
-                        "Product not present in database"
-                );
-
-                return response;
-            }
-
-            inventoryRepository
-                    .deleteByProductId(id);
+        if (!valid) {
 
             response.put(
                     "message",
-                    "Product deleted successfully"
+                    "Product not present in database"
             );
 
-        } catch (Exception e) {
-
-            response.put(
-                    "message",
-                    e.getMessage()
-            );
+            return response;
         }
+
+        inventoryRepository
+                .deleteByProductId(id);
+
+        response.put(
+                "message",
+                "Product deleted successfully"
+        );
 
         return response;
     }
 
     // Validate Quantity
     @GetMapping(
-        "/validate/{quantity}/{storeId}/{productId}")
+        "/validate/{quantity}/{storeId}/{productId}"
+    )
     public boolean validateQuantity(
             @PathVariable Integer quantity,
             @PathVariable Long storeId,
