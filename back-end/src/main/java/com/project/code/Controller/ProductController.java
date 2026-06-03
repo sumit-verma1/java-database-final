@@ -1,11 +1,10 @@
 package com.project.code.Controller;
 
-package com.project.code.Controller;
+
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -41,18 +40,22 @@ public class ProductController {
     public Map<String, String> addProduct(
             @RequestBody Product product) {
 
-        Map<String, String> response = new HashMap<>();
+        Map<String, String> response =
+                new HashMap<>();
 
         try {
 
-            boolean isValid = serviceClass
+            boolean valid =
+                    serviceClass
                     .validateProduct(product);
 
-            if (!isValid) {
+            if (!valid) {
+
                 response.put(
                         "message",
                         "Product already exists"
                 );
+
                 return response;
             }
 
@@ -63,7 +66,8 @@ public class ProductController {
                     "Product added successfully"
             );
 
-        } catch (DataIntegrityViolationException e) {
+        } catch (
+                DataIntegrityViolationException e) {
 
             response.put(
                     "message",
@@ -82,18 +86,21 @@ public class ProductController {
     }
 
     // Get Product By Id
-    @GetMapping("/product/{id}")
+    @GetMapping("/{id}")
     public Map<String, Object> getProductbyId(
             @PathVariable Long id) {
 
         Map<String, Object> response =
                 new HashMap<>();
 
-        Optional<Product> product =
-                productRepository.findById(id);
+        Product product =
+                productRepository
+                .findByid(id);
 
-        response.put("products",
-                product.orElse(null));
+        response.put(
+                "products",
+                product
+        );
 
         return response;
     }
@@ -126,7 +133,7 @@ public class ProductController {
         return response;
     }
 
-    // Filter By Category & Name
+    // Filter Product By Category
     @GetMapping("/category/{name}/{category}")
     public Map<String, Object>
     filterbyCategoryProduct(
@@ -141,26 +148,37 @@ public class ProductController {
         if ("null".equals(name)
                 && "null".equals(category)) {
 
-            products = productRepository.findAll();
+            products =
+                    productRepository
+                    .findAll();
 
         } else if ("null".equals(name)) {
 
-            products = productRepository
-                    .findByCategory(category);
+            products =
+                    productRepository
+                    .findByCategory(
+                            category);
 
         } else if ("null".equals(category)) {
 
-            products = productRepository
-                    .findProductBySubName(name);
+            products =
+                    productRepository
+                    .findProductBySubName(
+                            name);
 
         } else {
 
-            products = productRepository
+            products =
+                    productRepository
                     .findProductBySubNameAndCategory(
-                            name, category);
+                            name,
+                            category);
         }
 
-        response.put("products", products);
+        response.put(
+                "products",
+                products
+        );
 
         return response;
     }
@@ -180,7 +198,7 @@ public class ProductController {
         return response;
     }
 
-    // Filter Product By Category & Store Id
+    // Filter Product By Category & StoreId
     @GetMapping("/filter/{category}/{storeid}")
     public Map<String, Object>
     getProductbyCategoryAndStoreId(
@@ -193,9 +211,9 @@ public class ProductController {
         response.put(
                 "product",
                 productRepository
-                        .findProductByCategory(
-                                category,
-                                storeid)
+                .findProductByCategory(
+                        category,
+                        storeid)
         );
 
         return response;
@@ -209,40 +227,32 @@ public class ProductController {
         Map<String, String> response =
                 new HashMap<>();
 
-        try {
+        boolean exists =
+                serviceClass
+                .ValidateProductId(id);
 
-            boolean exists =
-                    serviceClass
-                    .ValidateProductId(id);
-
-            if (!exists) {
-
-                response.put(
-                        "message",
-                        "Product not found"
-                );
-
-                return response;
-            }
-
-            inventoryRepository
-                    .deleteByProductId(id);
-
-            productRepository
-                    .deleteById(id);
+        if (!exists) {
 
             response.put(
                     "message",
-                    "Product deleted successfully"
+                    "Product not found"
             );
 
-        } catch (Exception e) {
-
-            response.put(
-                    "message",
-                    e.getMessage()
-            );
+            return response;
         }
+
+        // Delete Inventory First
+        inventoryRepository
+                .deleteByProductId(id);
+
+        // Delete Product
+        productRepository
+                .deleteById(id);
+
+        response.put(
+                "message",
+                "Product deleted successfully"
+        );
 
         return response;
     }
@@ -259,10 +269,10 @@ public class ProductController {
         response.put(
                 "products",
                 productRepository
-                        .findProductBySubName(name)
+                .findProductBySubName(
+                        name)
         );
 
         return response;
     }
-}
 }
