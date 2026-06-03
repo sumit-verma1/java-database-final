@@ -1,7 +1,5 @@
 package com.project.code.Controller;
 
-
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,7 +27,22 @@ public class ReviewController {
     @Autowired
     private CustomerRepository customerRepository;
 
-    // Get Reviews By Store Id & Product Id
+    // Get All Reviews
+    @GetMapping
+    public Map<String, Object> getAllReviews() {
+
+        Map<String, Object> response =
+                new HashMap<>();
+
+        response.put(
+                "reviews",
+                reviewRepository.findAll()
+        );
+
+        return response;
+    }
+
+    // Get Reviews By StoreId & ProductId
     @GetMapping("/{storeId}/{productId}")
     public Map<String, Object> getReviews(
             @PathVariable Long storeId,
@@ -38,7 +51,8 @@ public class ReviewController {
         Map<String, Object> response =
                 new HashMap<>();
 
-        List<Map<String, Object>> reviewList =
+        List<Map<String, Object>>
+                reviewResponse =
                 new ArrayList<>();
 
         // Fetch Reviews
@@ -48,24 +62,23 @@ public class ReviewController {
                         storeId,
                         productId);
 
-        // Filter Required Data
+        // Add Customer Name
         for (Review review : reviews) {
 
-            Map<String, Object> reviewData =
+            Map<String, Object>
+                    reviewData =
                     new HashMap<>();
 
-            // Add Comment
             reviewData.put(
                     "comment",
                     review.getComment());
 
-            // Add Rating
             reviewData.put(
                     "rating",
                     review.getRating());
 
-            // Get Customer Name
-            Optional<Customer> customer =
+            Optional<Customer>
+                    customer =
                     customerRepository
                     .findById(
                             review.getCustomerId());
@@ -74,15 +87,16 @@ public class ReviewController {
                     "customerName",
                     customer.isPresent()
                             ? customer.get()
-                                .getName()
+                                    .getName()
                             : "Unknown");
 
-            reviewList.add(reviewData);
+            reviewResponse.add(
+                    reviewData);
         }
 
         response.put(
                 "reviews",
-                reviewList);
+                reviewResponse);
 
         return response;
     }
