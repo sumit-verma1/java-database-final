@@ -1,13 +1,9 @@
-package com.project.code.Repo;
-
-
-
+package com.project.code.Repository;
 
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.project.code.Model.Product;
@@ -16,31 +12,31 @@ import com.project.code.Model.Product;
 public interface ProductRepository
         extends JpaRepository<Product, Long> {
 
-    // Find All Products
+    // Find all products
     List<Product> findAll();
 
-    // Find By Category
+    // Find by category
     List<Product> findByCategory(
             String category);
 
-    // Find By Price Range
+    // Find by price range
     List<Product> findByPriceBetween(
             Double minPrice,
             Double maxPrice);
 
-    // Find By SKU
+    // Find by SKU
     List<Product> findBySku(
             String sku);
 
-    // Find By Name
+    // Find by name
     Product findByName(
             String name);
 
-    // Find By Id
+    // Find by ID
     Product findByid(
             Long id);
 
-    // Find Product By Name for Store
+    // Find products by name for store
     @Query("""
         SELECT i.product
         FROM Inventory i
@@ -49,10 +45,10 @@ public interface ProductRepository
         LIKE LOWER(CONCAT('%', :pname, '%'))
     """)
     List<Product> findByNameLike(
-            @Param("storeId") Long storeId,
-            @Param("pname") String pname);
+            Long storeId,
+            String pname);
 
-    // Find By Name & Category
+    // Find by name and category for store
     @Query("""
         SELECT i.product
         FROM Inventory i
@@ -62,11 +58,11 @@ public interface ProductRepository
         AND i.product.category = :category
     """)
     List<Product> findByNameAndCategory(
-            @Param("storeId") Long storeId,
-            @Param("pname") String pname,
-            @Param("category") String category);
+            Long storeId,
+            String pname,
+            String category);
 
-    // Find By Category & StoreId
+    // Find by category and store id
     @Query("""
         SELECT i.product
         FROM Inventory i
@@ -74,10 +70,10 @@ public interface ProductRepository
         AND i.product.category = :category
     """)
     List<Product> findByCategoryAndStoreId(
-            @Param("category") String category,
-            @Param("storeId") Long storeId);
+            String category,
+            Long storeId);
 
-    // Find Product By Sub Name
+    // Find product by name
     @Query("""
         SELECT i
         FROM Product i
@@ -85,18 +81,18 @@ public interface ProductRepository
         LIKE LOWER(CONCAT('%', :pname, '%'))
     """)
     List<Product> findProductBySubName(
-            @Param("pname") String pname);
+            String pname);
 
-    // Find Products By Store Id
+    // Find products by store id
     @Query("""
         SELECT i.product
         FROM Inventory i
         WHERE i.store.id = :storeId
     """)
     List<Product> findProductsByStoreId(
-            @Param("storeId") Long storeId);
+            Long storeId);
 
-    // Find Product By Category
+    // Find product by category & store
     @Query("""
         SELECT i.product
         FROM Inventory i
@@ -104,10 +100,10 @@ public interface ProductRepository
         AND i.store.id = :storeId
     """)
     List<Product> findProductByCategory(
-            @Param("category") String category,
-            @Param("storeId") Long storeId);
+            String category,
+            Long storeId);
 
-    // Find Product By Name & Category
+    // Find product by name & category
     @Query("""
         SELECT i
         FROM Product i
@@ -116,7 +112,6 @@ public interface ProductRepository
         AND i.category = :category
     """)
     List<Product> findProductBySubNameAndCategory(
-            @Param("pname") String pname,
-            @Param("category") String category);
-}
+            String pname,
+            String category);
 }
