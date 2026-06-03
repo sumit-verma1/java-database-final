@@ -7,10 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.project.code.Model.Customer;
 import com.project.code.Model.Review;
@@ -27,22 +24,21 @@ public class ReviewController {
     @Autowired
     private CustomerRepository customerRepository;
 
-    // Get All Reviews
+    // GET /reviews
     @GetMapping
-    public Map<String, Object> getAllReviews() {
+    public Map<String, Object> getReviews() {
 
         Map<String, Object> response =
                 new HashMap<>();
 
         response.put(
                 "reviews",
-                reviewRepository.findAll()
-        );
+                reviewRepository.findAll());
 
         return response;
     }
 
-    // Get Reviews By StoreId & ProductId
+    // GET /reviews/{storeId}/{productId}
     @GetMapping("/{storeId}/{productId}")
     public Map<String, Object> getReviews(
             @PathVariable Long storeId,
@@ -52,17 +48,15 @@ public class ReviewController {
                 new HashMap<>();
 
         List<Map<String, Object>>
-                reviewResponse =
+                reviewList =
                 new ArrayList<>();
 
-        // Fetch Reviews
         List<Review> reviews =
                 reviewRepository
                 .findByStoreIdAndProductId(
                         storeId,
                         productId);
 
-        // Add Customer Name
         for (Review review : reviews) {
 
             Map<String, Object>
@@ -81,22 +75,30 @@ public class ReviewController {
                     customer =
                     customerRepository
                     .findById(
-                            review.getCustomerId());
+                            review
+                            .getCustomerId());
 
-            reviewData.put(
-                    "customerName",
-                    customer.isPresent()
-                            ? customer.get()
-                                    .getName()
-                            : "Unknown");
+            if (customer.isPresent()) {
 
-            reviewResponse.add(
+                reviewData.put(
+                        "customerName",
+                        customer.get()
+                                .getName());
+
+            } else {
+
+                reviewData.put(
+                        "customerName",
+                        "Unknown");
+            }
+
+            reviewList.add(
                     reviewData);
         }
 
         response.put(
                 "reviews",
-                reviewResponse);
+                reviewList);
 
         return response;
     }
