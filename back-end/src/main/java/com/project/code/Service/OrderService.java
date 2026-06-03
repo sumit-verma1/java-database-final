@@ -18,10 +18,14 @@ import com.project.code.Repository.CustomerRepository;
 import com.project.code.Repository.InventoryRepository;
 import com.project.code.Repository.OrderDetailsRepository;
 import com.project.code.Repository.OrderItemRepository;
+import com.project.code.Repository.ProductRepository;
 import com.project.code.Repository.StoreRepository;
 
 @Service
 public class OrderService {
+
+    @Autowired
+    private ProductRepository productRepository;
 
     @Autowired
     private InventoryRepository inventoryRepository;
@@ -41,15 +45,14 @@ public class OrderService {
     public void saveOrder(
             PlaceOrderRequestDTO placeOrderRequest) {
 
-        // Find Existing Customer
+        // Find existing customer
         Optional<Customer> customerOptional =
                 customerRepository.findByEmail(
-                        placeOrderRequest
-                                .getEmail());
+                        placeOrderRequest.getEmail());
 
         Customer customer;
 
-        // Create customer if not exists
+        // Create customer if not found
         if (customerOptional.isPresent()) {
 
             customer =
@@ -57,32 +60,30 @@ public class OrderService {
 
         } else {
 
-            customer = new Customer();
+            customer =
+                    new Customer();
 
             customer.setName(
-                    placeOrderRequest
-                            .getName());
+                    placeOrderRequest.getName());
 
             customer.setEmail(
-                    placeOrderRequest
-                            .getEmail());
+                    placeOrderRequest.getEmail());
 
             customer.setPhone(
-                    placeOrderRequest
-                            .getPhone());
+                    placeOrderRequest.getPhone());
 
             customer =
                     customerRepository
                     .save(customer);
         }
 
-        // Get Store
+        // Get store
         Optional<Store> storeOptional =
                 storeRepository.findById(
-                        placeOrderRequest
-                                .getStoreId());
+                        placeOrderRequest.getStoreId());
 
         if (!storeOptional.isPresent()) {
+
             throw new RuntimeException(
                     "Store not found");
         }
@@ -90,7 +91,7 @@ public class OrderService {
         Store store =
                 storeOptional.get();
 
-        // Create OrderDetails
+        // Create order details
         OrderDetails orderDetails =
                 new OrderDetails();
 
@@ -107,16 +108,17 @@ public class OrderService {
         orderDetails.setDate(
                 LocalDateTime.now());
 
-        // SAVE ORDER DETAILS
+        // Save order details
         orderDetails =
                 orderDetailsRepository
                 .save(orderDetails);
 
-        // Process Order Items
+        // Process products
         for (PurchaseProduct productDTO
                 : placeOrderRequest
                 .getPurchaseProduct()) {
 
+            // Find inventory
             Inventory inventory =
                     inventoryRepository
                     .findByProductIdandStoreId(
@@ -126,24 +128,29 @@ public class OrderService {
                                     .getStoreId());
 
             if (inventory == null) {
+
                 throw new RuntimeException(
                         "Inventory not found");
             }
 
-            // REDUCE STOCK LEVEL
+            // Reduce stock level
             inventory.setQuantity(
                     inventory.getQuantity()
                     - productDTO
                     .getQuantity());
 
-            // SAVE UPDATED INVENTORY
+            // Save updated inventory
             inventoryRepository
                     .save(inventory);
 
+            // Find product
             Product product =
-                    inventory.getProduct();
+                    productRepository
+                    .findByid(
+                            productDTO
+                                    .getProductId());
 
-            // Create Order Item
+            // Create order item
             OrderItem orderItem =
                     new OrderItem();
 
@@ -160,6 +167,7 @@ public class OrderService {
             orderItem.setPrice(
                     product.getPrice());
 
+            // Save order item
             orderItemRepository
                     .save(orderItem);
         }
