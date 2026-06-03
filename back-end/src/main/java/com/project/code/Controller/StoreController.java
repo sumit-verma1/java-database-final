@@ -1,9 +1,5 @@
 package com.project.code.Controller;
 
-
-
-
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,57 +21,59 @@ public class StoreController {
     @Autowired
     private OrderService orderService;
 
+    // Add Store
     @PostMapping
     public Map<String, String> addStore(
             @RequestBody Store store) {
 
-        Store savedStore =
-                storeRepository.save(store);
-
         Map<String, String> response =
                 new HashMap<>();
+
+        Store savedStore =
+                storeRepository.save(store);
 
         response.put(
                 "message",
                 "Store successfully created with ID: "
-                        + savedStore.getId()
-        );
+                        + savedStore.getId());
 
         return response;
     }
 
-    @GetMapping("/validate/store/{id}")
+    // Validate Store
+    @GetMapping("validate/store/{id}")
     public boolean validateStore(
             @PathVariable Long id) {
 
-        return storeRepository.existsById(id);
+        return storeRepository
+                .existsById(id);
     }
 
+    // Place Order
     @PostMapping("/placeOrder")
     public Map<String, String> placeOrder(
-            @RequestBody PlaceOrderRequestDTO requestDTO) {
+            @RequestBody
+            PlaceOrderRequestDTO requestDTO) {
 
         Map<String, String> response =
                 new HashMap<>();
 
         try {
 
-            orderService.saveOrder(requestDTO);
+            orderService
+                    .saveOrder(requestDTO);
 
             response.put(
                     "message",
-                    "Order placed successfully"
-            );
+                    "Order placed successfully");
 
         } catch (Exception e) {
 
             response.put(
                     "Error",
-                    e.getMessage()
-            );
+                    e.getMessage());
         }
 
         return response;
     }
-}
 }
